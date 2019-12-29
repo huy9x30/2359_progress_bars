@@ -1,0 +1,23 @@
+{
+  "name": "2356_media",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "babel-core": "^6.26.3",
+    "babel-jest": "^24.9.0",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-jest": "^24.9.0",
+    "jest": "^24.9.0",
+    "sass-loader": "^8.0.0"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.7.7"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

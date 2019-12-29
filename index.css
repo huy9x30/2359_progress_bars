@@ -1,0 +1,32 @@
+body {
+    text-align: center;
+}
+
+body #bars .progress.active {
+  border: 2px solid #000;
+}
+
+body #bars .progress {
+  width: 250px;
+  border: 1px solid #000;
+  height: 38px;
+  margin: 10px auto;
+  position: relative;
+}
+
+body #bars .filled {
+  height: 38px;
+  line-height: 38px;
+  background: #a2c4ff;
+  transition: width 0.5s;
+}
+
+body #bars .legend {
+  height: 38px;
+  line-height: 38px;
+  color: #333;
+  width: 100%;
+  text-align: center;
+  position: absolute;
+  font-size: 18px;
+}
