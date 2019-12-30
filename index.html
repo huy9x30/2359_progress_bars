@@ -5,23 +5,102 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="./index.css">
+    <link rel="stylesheet" href="./public/index.css">
     <title>2359 Chart</title>
 </head>
 <body>
-    <h1>Progress Bars</h1>
-    <div id="bars"></div>
-    <select id="bar-select"></select>
-    <div id="buttons"></div>
-    <script type="module">
-        import { getAPI, generateButtons, generateBars, generateBarSelect, onChangeSelect } from './index.js'
-        document.addEventListener("DOMContentLoaded", () => {
-            const apiResponse = getAPI()
-            generateBars(apiResponse.bars, apiResponse.limit)
-            generateButtons(apiResponse.buttons, apiResponse.limit)
-            generateBarSelect(apiResponse.bars)
-            document.getElementById('bar-select').onchange = onChangeSelect
-        })
-    </script>
+<h1>Progress Bars</h1>
+<div id="bars"></div>
+<select id="bar-select"></select>
+<div id="buttons"></div>
+<script type="text/javascript">
+    const progressBar = (apiResponse) => {
+        const generateButtons = (buttons, limit) => {
+            buttons.map((buttonValue, index) => {
+                const buttonElement = document.createElement('button')
+
+                buttonElement.setAttribute('id', `button-${index + 1}`)
+                buttonElement.innerText = buttonValue > 0 ? `+${buttonValue.toString()}` : buttonValue.toString()
+                buttonElement.onclick = (e) => {
+                    const filledElement = document.querySelector('.active > .filled')
+                    const legendElement = document.querySelector('.active > .filled > .legend')
+                    const totalValue = parseInt(filledElement.getAttribute('data-value')) + buttonValue
+
+                    legendElement.innerText = totalValue <= 0 ? '0%' : `${Math.round(totalValue / limit * 100)}%`
+                    filledElement.setAttribute('data-value', totalValue <= 0 ? 0 : totalValue)
+
+                    if (totalValue > limit) {
+                        filledElement.setAttribute('style', `width: calc(100% - 1px); background: red;`)
+                    } else if (totalValue < 0) {
+                        filledElement.setAttribute('style', `width: 0;`)
+                    } else {
+                        filledElement.setAttribute('style', `width: ${Math.round(totalValue / limit * 100)}%`)
+                    }
+                }
+
+                document.getElementById('buttons').appendChild(buttonElement)
+            })
+        }
+
+        const generateBars = (bars, limit) => {
+            bars.map((barValue, index) => {
+                const boxElement = document.createElement('div')
+                const barElement = document.createElement('div')
+                const filledElement = document.createElement('div')
+                const legendElement = document.createElement('div')
+                const percentage = `${Math.round(barValue / limit * 100)}`
+
+                legendElement.classList.add('legend')
+                legendElement.innerText = `${percentage}%`
+
+                filledElement.classList.add('filled')
+                filledElement.setAttribute('data-value', barValue)
+                filledElement.setAttribute('style', `width: ${percentage}%`)
+
+                barElement.classList.add('progress')
+                barElement.setAttribute('id', `bar-${index + 1}`)
+                if (index === 0) barElement.classList.add('active')
+
+                document.getElementById('bars')
+                    .appendChild(barElement)
+                    .appendChild(filledElement)
+                    .appendChild(legendElement)
+            })
+        }
+
+        const generateBarSelect = (bars) => {
+            bars.map((bar, index) => {
+                const selectOptionElement = document.createElement('option')
+                selectOptionElement.setAttribute('value', (index + 1).toString())
+                selectOptionElement.innerText = `#progress-${index + 1}`
+                document.getElementById('bar-select').appendChild(selectOptionElement)
+            })
+        }
+
+        const onChangeSelect = (e) => {
+            const bars = document.querySelectorAll('.progress')
+            if (bars) {
+                bars.forEach(progress => {
+                    progress.classList.remove('active')
+                })
+            }
+            document.querySelector(`#bar-${e.target.value}`).classList.add('active')
+        }
+
+        generateBars(apiResponse.bars, apiResponse.limit)
+        generateButtons(apiResponse.buttons, apiResponse.limit)
+        generateBarSelect(apiResponse.bars)
+        document.getElementById('bar-select').onchange = onChangeSelect
+    }
+
+    var oReq = new XMLHttpRequest();
+    oReq.onload = function (e) {
+        const apiResponse = e.target.response
+        progressBar(apiResponse)
+    }
+    oReq.open('GET', 'http://localhost:8800/endpoint', true);
+    oReq.responseType = 'json';
+    oReq.send();
+</script>
 </body>
 </html>
