@@ -7,7 +7,7 @@ $ npm install
 Run project
 
 ```
-$ npm install
+$ npm start
 ```
 
 Project will be available at **http://localhost:8080**
