@@ -4,96 +4,110 @@ export const generateButtons = (buttons, limit) => {
 
         buttonElement.setAttribute('id', `button-${index + 1}`)
         buttonElement.innerText = buttonValue > 0 ? `+${buttonValue.toString()}` : buttonValue.toString()
-        buttonElement.onclick = (e) => {
-            const filledElement = document.querySelector('.active > .filled')
-            const legendElement = document.querySelector('.active > .filled > .legend')
-            const totalValue = parseInt(filledElement.getAttribute('data-value')) + buttonValue
-
-            legendElement.innerText = totalValue <= 0 ? '0%' : `${Math.round(totalValue / limit * 100)}%`
-            filledElement.setAttribute('data-value', totalValue <= 0 ? 0 : totalValue)
-
-            if (totalValue > limit) {
-                filledElement.setAttribute('style', `width: 100%; background: red;`)
-                legendElement.setAttribute('style', `color: #fff`)
-            } else if (totalValue < 0) {
-                filledElement.setAttribute('style', `width: 0;`)
-                legendElement.setAttribute('style', `color: #333`)
-            } else {
-                filledElement.setAttribute('style', `width: ${Math.round(totalValue / limit * 100)}%`)
-                legendElement.setAttribute('style', `color: #333`)
-            }
-        }
+        buttonElement.onclick = onButtonClick.bind(this, buttonValue, limit)
         return buttonElement
     })
 }
 
-export const generateBars = (parentElement, bars, limit) => {
-    bars.map((barValue, index) => {
-        const boxElement = document.createElement('div')
+export const onButtonClick = (buttonValue, limit, e) => {
+    const filledElement = document.querySelector('.active > .filled')
+    const legendElement = document.querySelector('.active > .filled > .legend')
+    const totalValue = parseInt(filledElement.getAttribute('data-value')) + buttonValue
+
+    legendElement.innerText = totalValue <= 0 ? '0%' : `${Math.round(totalValue / limit * 100)}%`
+    filledElement.setAttribute('data-value', totalValue <= 0 ? 0 : totalValue)
+
+    if (totalValue > limit) {
+        filledElement.setAttribute('style', `width: 100%; background: red;`)
+        legendElement.setAttribute('style', `color: #fff`)
+    } else if (totalValue < 0) {
+        filledElement.setAttribute('style', `width: 0;`)
+        legendElement.setAttribute('style', `color: #333`)
+    } else {
+        filledElement.setAttribute('style', `width: ${Math.round(totalValue / limit * 100)}%`)
+        legendElement.setAttribute('style', `color: #333`)
+    }
+}
+
+export const generateBars = (bars, limit) => {
+    return bars.map((barValue, index) => {
         const barElement = document.createElement('div')
         const filledElement = document.createElement('div')
         const legendElement = document.createElement('div')
         const percentage = `${Math.round(barValue / limit * 100)}`
 
-        legendElement.classList.add('legend')
-        legendElement.innerText = `${percentage}%`
+        barElement.classList.add('progress')
+        if (index === 0) barElement.classList.add('active')
 
         filledElement.classList.add('filled')
         filledElement.setAttribute('data-value', barValue)
         filledElement.setAttribute('style', `width: ${percentage}%`)
 
-        barElement.classList.add('progress')
-        barElement.setAttribute('id', `bar-${index + 1}`)
-        if (index === 0) barElement.classList.add('active')
+        legendElement.classList.add('legend')
+        legendElement.innerText = `${percentage}%`
 
-        parentElement
-            .appendChild(barElement)
+        barElement
             .appendChild(filledElement)
             .appendChild(legendElement)
+        return barElement
     })
 }
 
-export const generateBarSelect = (parentElement, bars) => {
-    bars.map((bar, index) => {
-        const selectOptionElement = document.createElement('option')
-        selectOptionElement.setAttribute('value', (index + 1).toString())
-        selectOptionElement.innerText = `#progress-${index + 1}`
-        parentElement.appendChild(selectOptionElement)
+export const generateSelectOptions = (bars) => {
+    return bars.map((bar, index) => {
+        const optionElement = document.createElement('option')
+        optionElement.setAttribute('value', (index + 1).toString())
+        optionElement.innerText = `#progress-${index + 1}`
+        return optionElement
     })
 }
 
-export const onChangeSelect = (e) => {
-    const bars = document.querySelectorAll('.progress')
+export const onChangeSelect = (bars, e) => {
     if (bars) {
-        bars.forEach(progress => {
+        bars.forEach((progress, index) => {
             progress.classList.remove('active')
+            if (parseInt(e.target.value) === (index + 1)) {
+                progress.classList.add('active')
+            }
         })
     }
-    document.querySelector(`#bar-${e.target.value}`).classList.add('active')
 }
 
 export const progressBar = (apiResponse) => {
-    generateBars(document.getElementById('bars'), apiResponse.bars, apiResponse.limit)
-    const buttons = generateButtons(apiResponse.buttons, apiResponse.limit)
-    buttons.map(button => document.getElementById('buttons').appendChild(button))
-    generateBarSelect(document.getElementById('bar-select'), apiResponse.bars)
-    document.getElementById('bar-select').onchange = onChangeSelect
+    const barElements = generateBars(apiResponse.bars, apiResponse.limit)
+    barElements.map(bar => document.getElementById('bars').appendChild(bar))
+    generateButtons(apiResponse.buttons, apiResponse.limit)
+        .map(button => document.getElementById('buttons').appendChild(button))
+    generateSelectOptions(apiResponse.bars)
+        .map(option => document.getElementById('bar-select').appendChild(option))
+    document.getElementById('bar-select').onchange = onChangeSelect.bind(this, barElements)
 }
 
-export const getApiAndGenerate = (req) => {
-    // var req = new XMLHttpRequest();
-    req.onload = function (e) {
-        if (e.target.status === 200) {
-            const apiResponse = e.target.response
-            progressBar(apiResponse)
-        } else {
-            const errorElement = document.getElementById('error')
-            errorElement.innerText = e.target.response
+export const callApi = (method, url) => {
+    return new Promise((resolve, reject) => {
+        const req = new XMLHttpRequest()
+        req.onload = function (e) {
+            if (e.target.status === 200) {
+                resolve(e.target)
+            } else {
+                reject(e.target)
+            }
         }
-    }
-    req.open('GET', 'http://localhost:8800/api/endpoint', true);
-    req.responseType = 'json';
-    req.send();
+        req.open(method, url, true);
+        req.responseType = 'json';
+        req.send();
+    })
 }
 
-getApiAndGenerate(new XMLHttpRequest())
+export const getApiAndGenerate = () => {
+    callApi('GET', 'http://localhost:8080/api/endpoint')
+        .then(success => {
+            progressBar(success.response)
+        })
+        .catch(error => {
+            const errorElement = document.getElementById('error')
+            errorElement.innerText = error.response
+        });
+}
+
+getApiAndGenerate()

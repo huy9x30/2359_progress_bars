@@ -5,7 +5,7 @@ var http = require("http"),
     CleanCSS = require('clean-css');
 
 const apiResponse = {"buttons": [21, 19, -48, -30], "bars": [62, 64, 83], "limit": 130}
-const port = 8800
+const port = 8080
 const notFoundContent = '<div id="error" style="text-align: center;font-size: 36px;margin-top: 35vh;">' +
     '<span>404 - Not found</span><br>' +
     '<a href="/">Homepage</a>' +
